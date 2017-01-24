@@ -8,9 +8,9 @@
 #define MiB 1024 * KiB
 #define GiB 1024 * MiB
 
-#define MEM_CHUNK_SIZE 1 * MiB
-#define MAX_MEM_SIZE 1 * GiB
-#define MAX_FILE_SIZE 1 * GiB
+const size_t MEM_CHUNK_SIZE = 1 * MiB;
+const size_t MAX_MEM_SIZE = 1 * GiB;
+const size_t MAX_FILE_SIZE = 1 * GiB;
 
 
 #define DEBUG_ENABLED 1
@@ -31,7 +31,7 @@ size_t mem_ptr = 0;
 size_t mem_max = 0;
 size_t program_ptr = 0;
 
-size_t n_loops = 0;
+size_t max_nested_loops = 0;
 size_t loops_stack_ptr = 0;
 
 
@@ -41,22 +41,21 @@ void allocate_memory()
 
     if (new_size > MAX_MEM_SIZE)
     {
-        fprintf(stderr, "OOM Error: can't allocate more than %d bytes of memory\n", MAX_MEM_SIZE);
+        fprintf(stderr, "OOM Error: can't allocate more than %zu bytes of memory\n", MAX_MEM_SIZE);
         exit(EXIT_FAILURE);
     }
-
 
     void* new_mem = realloc(mem, new_size);
 
     if (new_mem == NULL)
     {
-        fprintf(stderr, "OOM Error: can't allocate %lu bytes of memory\n", new_size);
+        fprintf(stderr, "OOM Error: can't allocate %zu bytes of memory\n", new_size);
         exit(EXIT_FAILURE);
     }
 
     mem = (mtype*)new_mem;
-    memset(mem + mem_size, 0, MEM_CHUNK_SIZE);
-    mem_size += MEM_CHUNK_SIZE;
+    memset(mem + mem_size, 0, new_size - mem_size);
+    mem_size = new_size;
 }
 
 void read_program(char* file_name)
@@ -75,11 +74,11 @@ void read_program(char* file_name)
 
     if (file_size > MAX_FILE_SIZE)
     {
-        fprintf(stderr, "IO Error: file is too big (max: %d bytes)\n", MAX_FILE_SIZE);
+        fprintf(stderr, "IO Error: file is too big (max: %zu bytes)\n", MAX_FILE_SIZE);
         exit(EXIT_FAILURE);
     }
 
-    program = (char*)calloc(file_size, sizeof(char));
+    program = (char*)calloc(file_size + 1, sizeof(char));
 
     if (program == NULL)
     {
@@ -113,9 +112,9 @@ void clean_check_program()
 
             ++k;
 
-            if (brackets > n_loops)
+            if (brackets > max_nested_loops)
             {
-                n_loops = brackets;
+                max_nested_loops = brackets;
             }
 
             if (c == '[')
@@ -135,11 +134,11 @@ void clean_check_program()
         exit(EXIT_FAILURE);
     }
 
-    loops_stack = (size_t*)calloc(n_loops, sizeof(size_t));
+    loops_stack = (size_t*)calloc(max_nested_loops, sizeof(size_t));
 
     if (loops_stack == NULL)
     {
-        fprintf(stderr, "OOM Error: can't allocate %lu bytes of memory\n", n_loops * sizeof(size_t));
+        fprintf(stderr, "OOM Error: can't allocate %zu bytes of memory\n", max_nested_loops * sizeof(size_t));
         exit(EXIT_FAILURE);
     }
 
