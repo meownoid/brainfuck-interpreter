@@ -11,12 +11,12 @@
 
 
 const size_t MEM_CHUNK_SIZE = 1 * MiB;
-const size_t MAX_MEM_SIZE = 1 * GiB;
-const size_t MAX_FILE_SIZE = 1 * GiB;
+const size_t MEM_MAX_SIZE = 1 * GiB;
+const size_t FILE_MAX_SIZE = 1 * GiB;
 
-typedef uint8_t mtype;
+typedef uint8_t mem_t;
 
-mtype *mem = NULL;
+mem_t *mem = NULL;
 char *program = NULL;
 size_t *loops_stack = NULL;
 
@@ -25,7 +25,6 @@ size_t program_size = 0;
 
 size_t mem_ptr = 0;
 size_t mem_max = 0;
-size_t program_ptr = 0;
 
 size_t max_nested_loops = 0;
 size_t loops_stack_ptr = 0;
@@ -34,8 +33,8 @@ size_t loops_stack_ptr = 0;
 void allocate_memory() {
     size_t new_size = mem_size + MEM_CHUNK_SIZE;
 
-    if (new_size > MAX_MEM_SIZE) {
-        fprintf(stderr, "OOM Error: can't allocate more than %zu bytes of memory\n", MAX_MEM_SIZE);
+    if (new_size > MEM_MAX_SIZE) {
+        fprintf(stderr, "OOM Error: can't allocate more than %zu bytes of memory\n", MEM_MAX_SIZE);
         exit(EXIT_FAILURE);
     }
 
@@ -46,7 +45,7 @@ void allocate_memory() {
         exit(EXIT_FAILURE);
     }
 
-    mem = (mtype *) new_mem;
+    mem = (mem_t *) new_mem;
     memset(mem + mem_size, 0, new_size - mem_size);
     mem_size = new_size;
 }
@@ -63,8 +62,8 @@ void read_program(char *file_name) {
     size_t file_size = ftell(fd);
     fseek(fd, 0L, SEEK_SET);
 
-    if (file_size > MAX_FILE_SIZE) {
-        fprintf(stderr, "IO Error: file is too big (max: %zu bytes)\n", MAX_FILE_SIZE);
+    if (file_size > FILE_MAX_SIZE) {
+        fprintf(stderr, "IO Error: file is too big (max: %zu bytes)\n", FILE_MAX_SIZE);
         exit(EXIT_FAILURE);
     }
 
@@ -130,9 +129,7 @@ void evaluate_program() {
     size_t i = 0;
 
     while (i < program_size) {
-        char c = program[i];
-
-        switch (c) {
+        switch (program[i]) {
             case '>':
                 ++mem_ptr;
 
@@ -195,21 +192,22 @@ void evaluate_program() {
                 mem[mem_ptr] = getc(stdin);
                 ++i;
                 break;
-
+#ifdef DEBUG_ENABLED
             case '@':
-                if (DEBUG_ENABLED) {
-                    printf("@ debug: ");
-                    for (size_t j = 0; j <= mem_max; ++j) {
-                        if (j == mem_ptr) {
-                            printf("*");
-                        }
-
-                        printf("(%lu: %d)", j, mem[j]);
+                printf("@ debug: ");
+                for (size_t j = 0; j <= mem_max; ++j) {
+                    if (j == mem_ptr) {
+                        printf("*");
                     }
-                    printf("\n");
 
-                    ++i;
+                    printf("(%lu: %d)", j, mem[j]);
                 }
+                printf("\n");
+
+                ++i;
+                break;
+#endif
+            default:
                 break;
         }
 
