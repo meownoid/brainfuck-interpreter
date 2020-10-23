@@ -4,12 +4,12 @@ This is a simple brainfuck programming language interpreter written in C. Becaus
 
 #### Build
 
-```
+```shell script
 make
 ```
 
 #### Use
-```
+```shell script
 ./cbf file.bf
 ```
 
