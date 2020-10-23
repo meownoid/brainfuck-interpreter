@@ -1,7 +1,6 @@
-Simple Brainfuck interpreter written in C
-=========================================
+# Brainfuck interpreter
 
-Because everyone should write one.
+This is a simple brainfuck programming language interpreter written in C. Because everyone should write one.
 
 #### Build
 
